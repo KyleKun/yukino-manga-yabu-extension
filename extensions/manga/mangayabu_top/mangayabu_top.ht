@@ -51,15 +51,14 @@ fun getInfo(url: str, locale: str) {
         const document: HtmlElement = parseHtml(resp['body']);
         
         const chapters: List<Map> = mapList(document.querySelectorAll('.manga-chapters .single-chapter a'), fun (i: num, x: HtmlElement) {
-            const sep: str = x.text.replaceFirst('Capítulo', '').trim().split(':');
+            const chNumber: str = x.text.replaceFirst('Capítulo', '').replaceFirst('-', '.').trim();
             const url: str = x.attributes['href'].trim();
-            const cvMatch = regexMatch('Capítulo (\\d+\\.?\\d*)(v(\\d+))?', sep[0]);
 
             return {
-                'title': sep.length > 1 ? sep[1].trim() : null,
+                'title': null,
                 'url': ensureURL(url),
-                'chapter': cvMatch != null ? cvMatch.group(1) : sep[0].replaceFirst('Capítulo', '').trim(),
-                'volume': cvMatch != null ? cvMatch.group(3) : null,
+                'chapter': chNumber,
+                'volume': null,
                 'locale': locale,
             };
         });
@@ -90,7 +89,7 @@ fun getChapter(chapter: Map) {
     }), fun (err, resp) {
         if (err != null) return throwError(err);
 
-        return mapList(
+        const chapter: List<Map> =  mapList(
             parseHtml(resp['body']).querySelectorAll('.row img'),
             fun (i: num, x: Map) {
                 const url: str = x.attributes['src'].trim();
@@ -100,6 +99,19 @@ fun getChapter(chapter: Map) {
                 };
             }
         );
+
+        var parsedChapter = [];
+        var i = 0;
+
+        // Remove two first images that are unwanted
+        for (var item in chapter) {
+            if (i >= 2) {
+                parsedChapter.add(item);
+            }
+            i = i + 1;
+        }
+
+        return parsedChapter;
     });
 }
 

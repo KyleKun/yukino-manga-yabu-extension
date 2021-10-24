@@ -11,7 +11,7 @@ Future<void> main() async {
     ),
     search: (ext) async => ext.search('bunny girl', 'pt'),
     getInfo: (ext) async => ext.getInfo(
-      'https://mangayabu.top/manga/seishun-buta-yarou-wa-bunny-girl-senpai-no-yume-wo-minai/',
+      'https://mangayabu.top/manga/yakumo-san-wa-ezuke-ga-shitai/',
       'pt',
     ),
     getChapter: (ext) async => ext.getChapter(
