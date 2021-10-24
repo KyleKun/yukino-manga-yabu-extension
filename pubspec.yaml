@@ -1,6 +1,6 @@
-name: yukino-extensions-template
-description: Extension template for Yukino
-version: 0.0.0
+name: yukino_manga_yabu_extension
+description: Manga Yabu Extension for Yukino
+version: 0.0.1
 
 publish_to: none
 

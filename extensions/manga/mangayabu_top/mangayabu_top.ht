@@ -1,0 +1,111 @@
+const baseURL = 'https://mangayabu.top/';
+
+const defaultHeaders: Map<str> = {
+    'User-Agent': httpUserAgent(),
+}
+
+fun searchURL(terms: str) -> str {
+    return ensureURL('${baseURL}/?s=${terms}');
+}
+
+fun defaultLocale() -> str {
+    return "pt";
+}
+
+fun search(terms: str, locale: str) {
+    return resolveFuture(fetch({
+        'method': 'get',
+        'url': searchURL(terms),
+        'headers': defaultHeaders
+    }), fun (err, resp) {
+        if (err != null) return throwError(err);
+
+        const document: HtmlElement = parseHtml(resp['body']);
+
+        return mapList(document.querySelectorAll('.row .col.s6.l2'), fun (i: num, x: HtmlElement) {
+            const link: HtmlElement = x.querySelector('.card .card-image a');
+            const url: str = link.attributes['href'];
+            const image: str = x.querySelector('.mango-hover img').attributes['src'];
+
+            return {
+                'title': link.attributes['title'].trim(),
+                'url': ensureURL(url),
+                'thumbnail': {
+                    'url': ensureURL(image),
+                    'headers': defaultHeaders,
+                },
+                'locale': locale,
+            };
+        });
+    });
+}
+
+fun getInfo(url: str, locale: str) {
+    return resolveFuture(fetch({
+        'method': 'get',
+        'url': ensureURL(url),
+        'headers': defaultHeaders
+    }), fun (err, resp) {
+        if (err != null) return throwError(err);
+
+        const document: HtmlElement = parseHtml(resp['body']);
+        
+        const chapters: List<Map> = mapList(document.querySelectorAll('.manga-chapters .single-chapter a'), fun (i: num, x: HtmlElement) {
+            const sep: str = x.text.replaceFirst('Capítulo', '').trim().split(':');
+            const url: str = x.attributes['href'].trim();
+            const cvMatch = regexMatch('Capítulo (\\d+\\.?\\d*)(v(\\d+))?', sep[0]);
+
+            return {
+                'title': sep.length > 1 ? sep[1].trim() : null,
+                'url': ensureURL(url),
+                'chapter': cvMatch != null ? cvMatch.group(1) : sep[0].replaceFirst('Capítulo', '').trim(),
+                'volume': cvMatch != null ? cvMatch.group(3) : null,
+                'locale': locale,
+            };
+        });
+       
+        const thumbnail: str = document.querySelector('.mango-cover-left-holder a img').attributes['src'].trim();
+        
+        return {
+            'title': document.querySelector('.breadcrumb_last').text,
+            'url': ensureURL(url),
+            'thumbnail': {
+                'url': ensureURL(thumbnail),
+                'headers': defaultHeaders
+            },
+            'chapters': chapters,
+            'locale': locale,
+            'availableLocales': [
+                locale
+            ]
+        };
+    });
+}
+
+fun getChapter(chapter: Map) {
+    return resolveFuture(fetch({
+        'method': 'get',
+        'url': ensureURL(chapter['url']),
+        'headers': defaultHeaders
+    }), fun (err, resp) {
+        if (err != null) return throwError(err);
+
+        return mapList(
+            parseHtml(resp['body']).querySelectorAll('.row img'),
+            fun (i: num, x: Map) {
+                const url: str = x.attributes['src'].trim();
+                return {
+                    'url': ensureURL(url),
+                    'locale': chapter['locale']
+                };
+            }
+        );
+    });
+}
+
+fun getPage(page: Map) {
+    return {
+        'url': page['url'],
+        'headers': defaultHeaders
+    };
+}
