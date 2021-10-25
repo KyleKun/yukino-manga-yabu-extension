@@ -89,29 +89,23 @@ fun getChapter(chapter: Map) {
     }), fun (err, resp) {
         if (err != null) return throwError(err);
 
-        const chapter: List<Map> =  mapList(
+        const chapter: List<Map> =  filterList(mapList(
             parseHtml(resp['body']).querySelectorAll('.row img'),
             fun (i: num, x: Map) {
+                // Remove two first images that are unwanted
+                if (i < 2) {
+                    return null;
+                }
                 const url: str = x.attributes['src'].trim();
                 return {
                     'url': ensureURL(url),
                     'locale': chapter['locale']
                 };
-            }
-        );
+            }), fun (i: num, x: Map) {
+                return x != null;
+        });
 
-        var parsedChapter = [];
-        var i = 0;
-
-        // Remove two first images that are unwanted
-        for (var item in chapter) {
-            if (i >= 2) {
-                parsedChapter.add(item);
-            }
-            i = i + 1;
-        }
-
-        return parsedChapter;
+        return chapter;
     });
 }
 
